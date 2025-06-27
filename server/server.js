@@ -30,6 +30,8 @@ app.use(passport.session());
 // ✅ Routes
 app.use("/api/auth", require("./routes/auth"));   // Local auth
 app.use("/api/auth", require("./routes/oauth"));  // Google/GitHub auth
+app.use("/api/components", require("./routes/component"));
+
 
 // ✅ MongoDB & Server Start
 const mongoose = require("mongoose");

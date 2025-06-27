@@ -9,6 +9,7 @@ import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useSelector } from "react-redux";
 import OAuthRedirect from "./pages/OAuthRedirect";
+import UploadComponent from "./pages/UploadComponent";
 
 function App() {
   const { user } = useSelector((state) => state.auth);
@@ -21,7 +22,14 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/auth/redirect" element={<OAuthRedirect />} />
-
+        <Route
+  path="/upload"
+  element={
+    <ProtectedRoute>
+      <UploadComponent />
+    </ProtectedRoute>
+  }
+/>
         <Route
           path="/dashboard"
           element={
