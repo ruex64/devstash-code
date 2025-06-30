@@ -5,11 +5,13 @@ const {
   generateAccessToken,
   generateRefreshToken,
 } = require("../utils/generateTokens");
+const generateSlug = require("../utils/generateSlug"); // <-- Import slug generator
 
 // Register a user (email + password)
 exports.register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
+
     const existing = await User.findOne({ email });
     if (existing) return res.status(409).json({ message: "User already exists" });
 
@@ -19,8 +21,11 @@ exports.register = async (req, res) => {
       email === process.env.MAIN_ADMIN_EMAIL &&
       password === process.env.MAIN_ADMIN_PASSWORD;
 
+    const slug = generateSlug(name);
+
     const user = await User.create({
       name,
+      slug,
       email,
       password: hashed,
       role: isMainAdmin ? "admin" : "viewer",
@@ -41,7 +46,14 @@ exports.register = async (req, res) => {
         secure: process.env.NODE_ENV === "production",
         sameSite: "Lax",
       })
-      .json({ user: { id: user._id, name: user.name, role: user.role } });
+      .json({
+        user: {
+          id: user._id,
+          name: user.name,
+          slug: user.slug,
+          role: user.role,
+        },
+      });
   } catch (err) {
     console.error("Register Error:", err);
     res.status(500).json({ message: "Server error" });
@@ -76,7 +88,14 @@ exports.login = async (req, res) => {
         secure: process.env.NODE_ENV === "production",
         sameSite: "Lax",
       })
-      .json({ user: { id: user._id, name: user.name, role: user.role } });
+      .json({
+        user: {
+          id: user._id,
+          name: user.name,
+          slug: user.slug,
+          role: user.role,
+        },
+      });
   } catch (err) {
     console.error("Login Error:", err);
     res.status(500).json({ message: "Server error" });
@@ -101,6 +120,7 @@ exports.getCurrentUser = async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id).select("-password");
     if (!user) return res.sendStatus(404);
+
     res.json({ user });
   } catch (err) {
     res.sendStatus(403);

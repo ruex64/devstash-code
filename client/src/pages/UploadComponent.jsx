@@ -67,7 +67,7 @@ const UploadComponent = () => {
         withCredentials: true,
       });
       alert("Component uploaded successfully");
-      navigate("/dashboard");
+      navigate("/");
     } catch (err) {
       console.error(err);
       alert("Upload failed");

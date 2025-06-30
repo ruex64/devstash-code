@@ -31,6 +31,10 @@ app.use(passport.session());
 app.use("/api/auth", require("./routes/auth"));   // Local auth
 app.use("/api/auth", require("./routes/oauth"));  // Google/GitHub auth
 app.use("/api/components", require("./routes/component"));
+app.use("/api/users", require("./routes/user"));
+const adminRoutes = require("./routes/admin");
+app.use("/api/admin", adminRoutes);
+
 
 
 // ✅ MongoDB & Server Start
