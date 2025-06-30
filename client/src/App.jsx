@@ -12,6 +12,7 @@ import UploadComponent from "./pages/UploadComponent";
 import UserProfile from "./pages/UserProfile";
 import DashboardProfile from "./pages/DashboardProfile";
 import AdminDashboard from "./pages/AdminDashboard";
+import ComponentDetail from "./pages/ComponentDetail";
 
 function App() {
   const { user } = useSelector((state) => state.auth);
@@ -25,6 +26,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/users/:slug" element={<UserProfile />} />
         <Route path="/auth/redirect" element={<OAuthRedirect />} />
+        <Route path="/components/:slug" element={<ComponentDetail />} />
         <Route
           path="/upload"
           element={<ProtectedRoute><UploadComponent /></ProtectedRoute>}

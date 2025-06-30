@@ -1,55 +1,54 @@
 const Component = require("../models/Component");
-const generateSlug = require("../utils/generateSlug");
 
+// Create a new component
 exports.createComponent = async (req, res) => {
   try {
-    const {
-      name,
-      description = "",
-      tags = [],
-      command = "",
-      codeFiles = [],
-      image = "",
-      version = "1.0.0",
-    } = req.body;
-
-    if (!name || !codeFiles.length) {
-      return res.status(400).json({ message: "Name and at least one code file are required." });
-    }
-
-    const slug = generateSlug(name);
-    const existing = await Component.findOne({ slug });
-    if (existing) {
-      return res.status(409).json({ message: "A component with this name already exists." });
-    }
+    const { name, slug, tags, image, code, fileType, version, commands } = req.body;
 
     const component = await Component.create({
       name,
       slug,
-      description,
+      tags,
       image,
+      code,
+      fileType,
       version,
-      tags: Array.isArray(tags) ? tags : tags.split(",").map(t => t.trim()),
-      command,
-      codeFiles,
-      creator: req.user.id,
+      commands,
+      creator: req.user.id || req.user._id,
     });
 
     res.status(201).json(component);
-  } catch (err) {
-    console.error("Create Component Error:", err);
-    res.status(500).json({ message: "Internal Server Error" });
+  } catch (error) {
+    console.error("Create Component Error:", error);
+    res.status(500).json({ message: "Failed to create component" });
   }
 };
+
+// Get all components
 exports.getAllComponents = async (req, res) => {
   try {
-    const components = await Component.find()
-      .populate("creator", "name avatar")
-      .sort({ createdAt: -1 }); // newest first
-
-    res.status(200).json(components);
-  } catch (err) {
-    console.error("Get All Components Error:", err);
+    const components = await Component.find().populate("creator", "name avatar");
+    res.json(components);
+  } catch (error) {
+    console.error("Get All Components Error:", error);
     res.status(500).json({ message: "Failed to fetch components" });
+  }
+};
+
+// Get single component by slug
+exports.getComponentBySlug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    const component = await Component.findOne({ slug }).populate("creator", "name avatar");
+
+    if (!component) {
+      return res.status(404).json({ message: "Component not found" });
+    }
+
+    res.json(component);
+  } catch (error) {
+    console.error("Get Component Error:", error);
+    res.status(500).json({ message: "Failed to fetch component" });
   }
 };
