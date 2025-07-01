@@ -1,19 +1,58 @@
 const Component = require("../models/Component");
+const slugify = require("slugify");
+
+// Helper to generate a unique slug from the name
+const generateUniqueSlug = async (name) => {
+  const baseSlug = slugify(name, { lower: true, strict: true });
+  let slug = baseSlug;
+  let count = 1;
+
+  while (await Component.findOne({ slug })) {
+    slug = `${baseSlug}-${count}`;
+    count++;
+  }
+
+  return slug;
+};
 
 // Create a new component
 exports.createComponent = async (req, res) => {
   try {
-    const { name, slug, tags, image, code, fileType, version, commands } = req.body;
+    const {
+      name,
+      tags = [],
+      image,
+      version = "1.0.0",
+      commands = "",
+      description = "",
+      codeFiles = [],
+    } = req.body;
+
+    // Basic validation
+    if (!name || !Array.isArray(codeFiles) || codeFiles.length === 0) {
+      return res.status(400).json({ message: "Name and at least one code file are required." });
+    }
+
+    for (const file of codeFiles) {
+      if (!file.filename || !file.fileType || !file.code) {
+        return res.status(400).json({
+          message: "Each code file must include filename, fileType, and code.",
+        });
+      }
+    }
+
+    const slug = await generateUniqueSlug(name);
 
     const component = await Component.create({
       name,
       slug,
-      tags,
+      description,
       image,
-      code,
-      fileType,
+      tags: Array.isArray(tags) ? tags : tags.split(",").map((t) => t.trim()),
       version,
       commands,
+      fileType: codeFiles[0]?.fileType || "js", // fallback to js
+      codeFiles,
       creator: req.user.id || req.user._id,
     });
 
@@ -35,7 +74,7 @@ exports.getAllComponents = async (req, res) => {
   }
 };
 
-// Get single component by slug
+// Get a single component by slug
 exports.getComponentBySlug = async (req, res) => {
   try {
     const { slug } = req.params;
@@ -50,5 +89,32 @@ exports.getComponentBySlug = async (req, res) => {
   } catch (error) {
     console.error("Get Component Error:", error);
     res.status(500).json({ message: "Failed to fetch component" });
+  }
+};
+
+// Delete a component by slug (admin or owner only)
+exports.deleteComponent = async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    const component = await Component.findOne({ slug });
+
+    if (!component) {
+      return res.status(404).json({ message: "Component not found" });
+    }
+
+    const isAdmin = req.user.role === "admin";
+    const isOwner = component.creator.toString() === (req.user.id || req.user._id);
+
+    if (!isAdmin && !isOwner) {
+      return res.status(403).json({ message: "Unauthorized to delete this component" });
+    }
+
+    await Component.deleteOne({ _id: component._id });
+
+    res.status(200).json({ message: "Component deleted successfully" });
+  } catch (error) {
+    console.error("Delete Component Error:", error);
+    res.status(500).json({ message: "Failed to delete component" });
   }
 };
