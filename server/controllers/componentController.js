@@ -118,3 +118,25 @@ exports.deleteComponent = async (req, res) => {
     res.status(500).json({ message: "Failed to delete component" });
   }
 };
+
+exports.getAllComponents = async (req, res) => {
+  try {
+    const search = req.query.search || "";
+    const searchRegex = new RegExp(search, "i"); // case-insensitive
+
+    const query = search
+      ? {
+          $or: [
+            { name: searchRegex },
+            { tags: { $in: [search] } },
+          ],
+        }
+      : {};
+
+    const components = await Component.find(query).populate("creator", "name avatar");
+    res.json(components);
+  } catch (error) {
+    console.error("Get All Components Error:", error);
+    res.status(500).json({ message: "Failed to fetch components" });
+  }
+};
