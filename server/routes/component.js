@@ -6,18 +6,23 @@ const {
   getComponentBySlug,
   deleteComponent,
 } = require("../controllers/componentController");
+
 const { verifyAccessToken } = require("../middleware/auth");
 
-// Create a new component
+// @route   POST /api/components
+// @desc    Create a new component (Authenticated)
 router.post("/", verifyAccessToken, createComponent);
 
-// Get all components
+// @route   GET /api/components
+// @desc    Get all components (Public, with optional search via query param)
 router.get("/", getAllComponents);
 
-// Get a single component by slug
+// @route   GET /api/components/:slug
+// @desc    Get a single component by slug (Public)
 router.get("/:slug", getComponentBySlug);
 
-// Delete a component by slug (only creator or admin can delete)
+// @route   DELETE /api/components/:slug
+// @desc    Delete a component (Admin or Owner only)
 router.delete("/:slug", verifyAccessToken, deleteComponent);
 
 module.exports = router;

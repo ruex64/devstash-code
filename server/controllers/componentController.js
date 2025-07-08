@@ -28,7 +28,6 @@ exports.createComponent = async (req, res) => {
       codeFiles = [],
     } = req.body;
 
-    // Basic validation
     if (!name || !Array.isArray(codeFiles) || codeFiles.length === 0) {
       return res.status(400).json({ message: "Name and at least one code file are required." });
     }
@@ -51,7 +50,7 @@ exports.createComponent = async (req, res) => {
       tags: Array.isArray(tags) ? tags : tags.split(",").map((t) => t.trim()),
       version,
       commands,
-      fileType: codeFiles[0]?.fileType || "js", // fallback to js
+      fileType: codeFiles[0]?.fileType || "js", // fallback
       codeFiles,
       creator: req.user.id || req.user._id,
     });
@@ -63,10 +62,22 @@ exports.createComponent = async (req, res) => {
   }
 };
 
-// Get all components
+// Get all components with optional search
 exports.getAllComponents = async (req, res) => {
   try {
-    const components = await Component.find().populate("creator", "name avatar");
+    const search = req.query.search || "";
+    const searchRegex = new RegExp(search, "i");
+
+    const query = search
+      ? {
+          $or: [
+            { name: searchRegex },
+            { tags: { $in: [search] } },
+          ],
+        }
+      : {};
+
+    const components = await Component.find(query).populate("creator", "name avatar");
     res.json(components);
   } catch (error) {
     console.error("Get All Components Error:", error);
@@ -79,7 +90,9 @@ exports.getComponentBySlug = async (req, res) => {
   try {
     const { slug } = req.params;
 
-    const component = await Component.findOne({ slug }).populate("creator", "name avatar");
+    const component = await Component.findOne({ slug })
+      .populate("creator", "name avatar")
+      .populate("remixedFrom", "name slug");
 
     if (!component) {
       return res.status(404).json({ message: "Component not found" });
@@ -116,27 +129,5 @@ exports.deleteComponent = async (req, res) => {
   } catch (error) {
     console.error("Delete Component Error:", error);
     res.status(500).json({ message: "Failed to delete component" });
-  }
-};
-
-exports.getAllComponents = async (req, res) => {
-  try {
-    const search = req.query.search || "";
-    const searchRegex = new RegExp(search, "i"); // case-insensitive
-
-    const query = search
-      ? {
-          $or: [
-            { name: searchRegex },
-            { tags: { $in: [search] } },
-          ],
-        }
-      : {};
-
-    const components = await Component.find(query).populate("creator", "name avatar");
-    res.json(components);
-  } catch (error) {
-    console.error("Get All Components Error:", error);
-    res.status(500).json({ message: "Failed to fetch components" });
   }
 };
