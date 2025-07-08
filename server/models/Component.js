@@ -2,22 +2,60 @@ const mongoose = require("mongoose");
 
 const componentSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
-    slug: { type: String, unique: true },
-    description: String,
-    image: String, // Cloudinary URL
-    version: { type: String, default: "1.0.0" },
-    tags: [String],
-    commands: String, // FIXED: was "command" in your version
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+    },
+    description: {
+      type: String,
+      default: "",
+    },
+    image: {
+      type: String, // Cloudinary URL
+      default: "",
+    },
+    version: {
+      type: String,
+      default: "1.0.0",
+    },
+    tags: {
+      type: [String],
+      default: [],
+    },
+    commands: {
+      type: String,
+      default: "",
+    },
+    fileType: {
+      type: String,
+      default: "js", // fallback fileType for the main file
+    },
     codeFiles: [
       {
-        filename: String,    // e.g. Button.jsx
-        fileType: String,    // js, jsx, css, html, tsx
-        code: String,
+        filename: { type: String, required: true },
+        fileType: { type: String, required: true },
+        code: { type: String, required: true },
       },
     ],
-    creator: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    createdAt: { type: Date, default: Date.now },
+    creator: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    // ✅ Reference to original component (if remixed)
+    remixedFrom: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Component",
+      default: null,
+    },
   },
   { timestamps: true }
 );

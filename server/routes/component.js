@@ -5,6 +5,7 @@ const {
   getAllComponents,
   getComponentBySlug,
   deleteComponent,
+  remixComponent,
 } = require("../controllers/componentController");
 
 const { verifyAccessToken } = require("../middleware/auth");
@@ -24,5 +25,10 @@ router.get("/:slug", getComponentBySlug);
 // @route   DELETE /api/components/:slug
 // @desc    Delete a component (Admin or Owner only)
 router.delete("/:slug", verifyAccessToken, deleteComponent);
+
+// ✅ NEW: Remix a component
+// @route   POST /api/components/:slug/remix
+// @desc    Remix a component (Authenticated)
+router.post("/:slug/remix", verifyAccessToken, remixComponent);
 
 module.exports = router;

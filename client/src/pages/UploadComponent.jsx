@@ -1,24 +1,43 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 
 const UploadComponent = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [form, setForm] = useState({
     name: "",
     description: "",
     version: "1.0.0",
     tags: "",
-    command: "",
+    commands: "",
   });
 
   const [image, setImage] = useState("");
   const [uploading, setUploading] = useState(false);
-
   const [codeFiles, setCodeFiles] = useState([
     { filename: "", fileType: "jsx", code: "" },
   ]);
+  const [remixedFrom, setRemixedFrom] = useState(null);
+
+  useEffect(() => {
+  const original = location.state?.original;
+  const remixFromId = location.state?.remixedFrom;
+
+  if (original && remixFromId) {
+    setForm({
+      name: original.name || "",
+      description: original.description || "",
+      version: "1.0.0",
+      tags: original.tags || "",
+      commands: original.commands || "",
+    });
+    setImage(original.image || "");
+    setCodeFiles(original.codeFiles || []);
+    setRemixedFrom(remixFromId); // Just ID
+  }
+}, [location.state]);
 
   const handleFileChange = (index, key, value) => {
     const updated = [...codeFiles];
@@ -31,8 +50,7 @@ const UploadComponent = () => {
   };
 
   const removeCodeFile = (index) => {
-    const updated = codeFiles.filter((_, i) => i !== index);
-    setCodeFiles(updated);
+    setCodeFiles(codeFiles.filter((_, i) => i !== index));
   };
 
   const handleImageUpload = async (e) => {
@@ -55,18 +73,20 @@ const UploadComponent = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     const payload = {
       ...form,
       tags: form.tags.split(",").map((t) => t.trim()),
-      codeFiles,
       image,
+      codeFiles,
+      remixedFrom,
     };
 
     try {
       await axios.post(`${import.meta.env.VITE_SERVER_URL}/components`, payload, {
         withCredentials: true,
       });
-      alert("Component uploaded successfully");
+      alert(remixedFrom ? "Remix uploaded successfully!" : "Component uploaded successfully!");
       navigate("/");
     } catch (err) {
       console.error(err);
@@ -76,7 +96,9 @@ const UploadComponent = () => {
 
   return (
     <div className="max-w-3xl mx-auto p-6 bg-white shadow rounded">
-      <h2 className="text-xl font-semibold mb-4">Upload a New Component</h2>
+      <h2 className="text-xl font-semibold mb-4">
+        {remixedFrom ? "Remix a Component" : "Upload a New Component"}
+      </h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="text"
@@ -113,8 +135,8 @@ const UploadComponent = () => {
         <input
           type="text"
           placeholder="CLI Command"
-          value={form.command}
-          onChange={(e) => setForm({ ...form, command: e.target.value })}
+          value={form.commands}
+          onChange={(e) => setForm({ ...form, commands: e.target.value })}
           className="w-full border px-4 py-2 rounded"
         />
 
@@ -178,7 +200,7 @@ const UploadComponent = () => {
           type="submit"
           className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700"
         >
-          Upload Component
+          {remixedFrom ? "Remix Component" : "Upload Component"}
         </button>
       </form>
     </div>

@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import { useSelector } from "react-redux";
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
+import RemixComponent from "./pages/RemixComponent";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -27,6 +28,7 @@ function App() {
         <Route path="/users/:slug" element={<UserProfile />} />
         <Route path="/auth/redirect" element={<OAuthRedirect />} />
         <Route path="/components/:slug" element={<ComponentDetail />} />
+        <Route path="/components/:slug/remix" element={<RemixComponent />} />
         <Route
           path="/upload"
           element={<ProtectedRoute><UploadComponent /></ProtectedRoute>}

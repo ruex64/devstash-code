@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import api from "../services/api";
-import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useSelector } from "react-redux";
@@ -11,12 +10,17 @@ const ComponentDetail = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const [component, setComponent] = useState(null);
+  const [remixes, setRemixes] = useState([]);
 
   useEffect(() => {
     const fetchComponent = async () => {
       try {
         const { data } = await api.get(`/components/${slug}`);
         setComponent(data);
+
+        // Fetch remixes of this component
+        const remixRes = await api.get(`/components?remixedFrom=${data._id}`);
+        setRemixes(remixRes.data || []);
       } catch (err) {
         console.error("Failed to fetch component:", err);
       }
@@ -46,6 +50,18 @@ const ComponentDetail = () => {
     <div className="max-w-4xl mx-auto px-6 py-10">
       <h1 className="text-3xl font-bold mb-2">{component.name}</h1>
       <p className="text-sm text-gray-500">Version: {component.version}</p>
+
+      {component.remixedFrom && (
+        <p className="text-sm text-blue-500 mt-1">
+          Remixed from{" "}
+          <Link
+            to={`/components/${component.remixedFrom.slug}`}
+            className="underline hover:text-blue-700"
+          >
+            {component.remixedFrom.name}
+          </Link>
+        </p>
+      )}
 
       <div className="flex flex-wrap gap-2 my-4">
         {component.tags.map((tag) => (
@@ -80,13 +96,17 @@ const ComponentDetail = () => {
         </div>
       ))}
 
-      {component.command && (
+      {(component.commands || component.command) && (
         <div className="mt-6">
           <h3 className="text-xl font-semibold">Command</h3>
           <div className="bg-gray-100 p-3 rounded-md flex justify-between items-center mt-2">
-            <code className="text-sm">{component.command}</code>
+            <code className="text-sm">
+              {component.commands || component.command}
+            </code>
             <button
-              onClick={() => navigator.clipboard.writeText(component.command)}
+              onClick={() =>
+                navigator.clipboard.writeText(component.commands || component.command)
+              }
               className="ml-4 text-sm text-blue-600 hover:underline"
             >
               Copy
@@ -101,22 +121,58 @@ const ComponentDetail = () => {
         </p>
         <p>
           Created by:{" "}
-          <a
-            href={`/users/${component.creator?.name}`}
+          <Link
+            to={`/users/${component.creator?.name}`}
             className="text-indigo-600 hover:underline"
           >
             {component.creator?.name}
-          </a>
+          </Link>
         </p>
       </div>
 
-      {isOwnerOrAdmin && (
-        <button
-          onClick={handleDelete}
-          className="mt-6 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
-        >
-          Delete Component
-        </button>
+      <div className="flex gap-4 mt-6">
+        {isOwnerOrAdmin && (
+          <button
+            onClick={handleDelete}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+          >
+            Delete Component
+          </button>
+        )}
+
+        {user && (
+          <button
+            onClick={() => navigate(`/components/${component.slug}/remix`)}
+            className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
+          >
+            Remix This Component
+          </button>
+        )}
+      </div>
+
+      {remixes.length > 0 && (
+        <div className="mt-12">
+          <h3 className="text-lg font-semibold mb-2">Remixed By</h3>
+          <ul className="space-y-2">
+            {remixes.map((r) => (
+              <li key={r._id} className="text-sm">
+                <Link
+                  to={`/components/${r.slug}`}
+                  className="text-indigo-600 hover:underline"
+                >
+                  {r.name}
+                </Link>{" "}
+                by{" "}
+                <Link
+                  to={`/users/${r.creator?.name}`}
+                  className="text-gray-800 hover:underline"
+                >
+                  {r.creator?.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );

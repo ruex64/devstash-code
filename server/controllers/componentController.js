@@ -1,7 +1,7 @@
 const Component = require("../models/Component");
 const slugify = require("slugify");
 
-// Helper to generate a unique slug from the name
+// Generate a unique slug
 const generateUniqueSlug = async (name) => {
   const baseSlug = slugify(name, { lower: true, strict: true });
   let slug = baseSlug;
@@ -15,7 +15,7 @@ const generateUniqueSlug = async (name) => {
   return slug;
 };
 
-// Create a new component
+// ✅ 1. Create a new component (not remix)
 exports.createComponent = async (req, res) => {
   try {
     const {
@@ -50,7 +50,7 @@ exports.createComponent = async (req, res) => {
       tags: Array.isArray(tags) ? tags : tags.split(",").map((t) => t.trim()),
       version,
       commands,
-      fileType: codeFiles[0]?.fileType || "js", // fallback
+      fileType: codeFiles[0]?.fileType || "js",
       codeFiles,
       creator: req.user.id || req.user._id,
     });
@@ -62,7 +62,55 @@ exports.createComponent = async (req, res) => {
   }
 };
 
-// Get all components with optional search
+// Remix a component
+exports.remixComponent = async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    const original = await Component.findOne({ slug });
+    if (!original) {
+      return res.status(404).json({ message: "Original component not found" });
+    }
+
+    const {
+      name,
+      tags = [],
+      image = original.image,
+      version = "1.0.0",
+      commands = original.commands,
+      description = original.description,
+      codeFiles = original.codeFiles,
+    } = req.body;
+
+    if (!name || !Array.isArray(codeFiles) || codeFiles.length === 0) {
+      return res.status(400).json({ message: "Name and at least one code file are required." });
+    }
+
+    const newSlug = await generateUniqueSlug(name);
+
+    const remix = await Component.create({
+      name,
+      slug: newSlug,
+      description,
+      image,
+      tags: Array.isArray(tags) ? tags : tags.split(",").map((t) => t.trim()),
+      version,
+      commands,
+      fileType: codeFiles[0]?.fileType || "js",
+      codeFiles,
+      creator: req.user.id || req.user._id,
+      remixedFrom: original._id,
+    });
+
+    res.status(201).json(remix);
+  } catch (err) {
+    console.error("Remix Component Error:", err);
+    res.status(500).json({ message: "Failed to remix component" });
+  }
+};
+
+
+// ✅ 3. Get All Components
 exports.getAllComponents = async (req, res) => {
   try {
     const search = req.query.search || "";
@@ -70,10 +118,7 @@ exports.getAllComponents = async (req, res) => {
 
     const query = search
       ? {
-          $or: [
-            { name: searchRegex },
-            { tags: { $in: [search] } },
-          ],
+          $or: [{ name: searchRegex }, { tags: { $in: [search] } }],
         }
       : {};
 
@@ -85,7 +130,7 @@ exports.getAllComponents = async (req, res) => {
   }
 };
 
-// Get a single component by slug
+// ✅ 4. Get a Component by Slug (with remix origin info)
 exports.getComponentBySlug = async (req, res) => {
   try {
     const { slug } = req.params;
@@ -105,13 +150,12 @@ exports.getComponentBySlug = async (req, res) => {
   }
 };
 
-// Delete a component by slug (admin or owner only)
+// ✅ 5. Delete Component
 exports.deleteComponent = async (req, res) => {
   try {
     const { slug } = req.params;
 
     const component = await Component.findOne({ slug });
-
     if (!component) {
       return res.status(404).json({ message: "Component not found" });
     }
