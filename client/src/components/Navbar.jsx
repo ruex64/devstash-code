@@ -1,95 +1,34 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
-import { logout } from "../redux/authSlice";
-import {
-  FiLogOut,
-  FiUser,
-  FiHome,
-  FiUserPlus,
-  FiPlus,
-  FiSearch,
-} from "react-icons/fi";
+import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 const Navbar = () => {
-  const { user } = useSelector((state) => state.auth);
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const [searchInput, setSearchInput] = useState("");
-  const [debounced, setDebounced] = useState("");
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const handler = setTimeout(() => setDebounced(searchInput), 500); // debounce delay
-    return () => clearTimeout(handler);
-  }, [searchInput]);
+    // TODO: Replace with actual user auth state logic
+    const storedUser = JSON.parse(localStorage.getItem('devstash_user'));
+    if (storedUser) setUser(storedUser);
+  }, []);
 
-  useEffect(() => {
-    if (debounced) {
-      navigate(`/?search=${debounced}`);
-    } else if (location.pathname === "/") {
-      navigate(`/`);
-    }
-  }, [debounced]);
+  const handleLogout = () => {
+    localStorage.removeItem('devstash_user');
+    setUser(null);
+    // Optionally call backend logout route
+  };
 
   return (
-    <nav className="bg-white shadow-sm px-6 py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-      <Link to="/" className="text-2xl font-bold text-indigo-600">
-        DevStash
-      </Link>
-
-      <div className="flex-1 max-w-md">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Search components..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full border border-gray-300 rounded pl-10 pr-4 py-2"
-          />
-          <FiSearch className="absolute left-3 top-2.5 text-gray-400" />
-        </div>
-      </div>
-
-      <div className="flex gap-4 items-center text-sm">
+    <nav className="bg-[#111] border-b border-[#222] px-6 py-4 flex justify-between items-center">
+      <Link to="/" className="text-xl font-bold text-white">DevStash</Link>
+      <div className="space-x-4">
         {user ? (
           <>
-            <Link
-              to="/dashboard"
-              className="text-gray-700 flex items-center gap-1 hover:text-indigo-600"
-            >
-              <FiHome /> Dashboard
-            </Link>
-
-            <Link
-              to="/upload"
-              className="text-gray-700 flex items-center gap-1 hover:text-indigo-600"
-            >
-              <FiPlus /> Upload
-            </Link>
-
-            <button
-              onClick={() => dispatch(logout())}
-              className="text-red-500 flex items-center gap-1 hover:text-red-600"
-            >
-              <FiLogOut /> Logout
-            </button>
+            <Link to="/dashboard" className="text-gray-300 hover:text-white">Dashboard</Link>
+            <button onClick={handleLogout} className="text-red-400 hover:text-red-500">Logout</button>
           </>
         ) : (
           <>
-            <Link
-              to="/login"
-              className="text-gray-700 flex items-center gap-1 hover:text-indigo-600"
-            >
-              <FiUser /> Login
-            </Link>
-            <Link
-              to="/register"
-              className="text-gray-700 flex items-center gap-1 hover:text-indigo-600"
-            >
-              <FiUserPlus /> Register
-            </Link>
+            <Link to="/login" className="text-gray-300 hover:text-white">Login</Link>
+            <Link to="/register" className="text-gray-300 hover:text-white">Register</Link>
           </>
         )}
       </div>

@@ -1,48 +1,45 @@
-import React from "react";
-import { Routes, Route } from "react-router-dom";
-import { useSelector } from "react-redux";
-import Navbar from "./components/Navbar";
-import ProtectedRoute from "./components/ProtectedRoute";
-import RemixComponent from "./pages/RemixComponent";
+import React from 'react';
+import { Route, Routes } from 'react-router-dom';
+import { Layout } from './components/layout/Layout';
+import ProtectedRoute from './components/common/ProtectedRoute';
+import AdminRoute from './components/common/AdminRoute';
 
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import OAuthRedirect from "./pages/OAuthRedirect";
-import UploadComponent from "./pages/UploadComponent";
-import UserProfile from "./pages/UserProfile";
-import DashboardProfile from "./pages/DashboardProfile";
-import AdminDashboard from "./pages/AdminDashboard";
-import ComponentDetail from "./pages/ComponentDetail";
+// Import Pages
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import CreateComponentPage from './pages/CreateComponentPage';
+import ComponentDetailPage from './pages/ComponentDetailPage';
+import ProfilePage from './pages/ProfilePage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import EditProfilePage from './pages/EditProfilePage';
+import AdminDashboard from './pages/AdminDashboard';
+import EditComponentPage from './pages/EditComponentPage';
 
 function App() {
-  const { user } = useSelector((state) => state.auth);
-
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Navbar />
+    <Layout>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/users/:slug" element={<UserProfile />} />
-        <Route path="/auth/redirect" element={<OAuthRedirect />} />
-        <Route path="/components/:slug" element={<ComponentDetail />} />
-        <Route path="/components/:slug/remix" element={<RemixComponent />} />
-        <Route
-          path="/upload"
-          element={<ProtectedRoute><UploadComponent /></ProtectedRoute>}
-        />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              {user?.role === "admin" ? <AdminDashboard /> : <DashboardProfile />}
-            </ProtectedRoute>
-          }
-        />
+        {/* Public Routes */}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/component/:id" element={<ComponentDetailPage />} />
+        <Route path="/profile/:userId" element={<ProfilePage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+
+        {/* Protected Routes (for any logged-in user) */}
+        <Route path="/create" element={<ProtectedRoute><CreateComponentPage /></ProtectedRoute>} />
+        <Route path="/edit-profile" element={<ProtectedRoute><EditProfilePage /></ProtectedRoute>} />
+        <Route path="/edit-component/:id" element={<ProtectedRoute><EditComponentPage /></ProtectedRoute>} />
+        
+        {/* Admin-Only Routes */}
+        <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+
       </Routes>
-    </div>
+    </Layout>
   );
 }
 
